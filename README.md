@@ -1,15 +1,15 @@
-#Analyse Azure WAF Logs
+# Analyse Azure WAF Logs
 
 The script in this repository, aggregates the triggered rules from a directory of Azure WAF logs.
 It reports the total count of each triggered rule and the number of rules triggered by each client IP address.
 
-##Usage
+## Usage
 
 ```bash
 python3 analyse-waf-logs /path/to/waf/logs
 ```
 
-##Sample Output
+## Sample Output
 
 The following sample shows the type of output produced by running the script.
 
