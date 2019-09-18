@@ -22,3 +22,6 @@ client ip, count
 X.X.X.X, 1012
 X.X.X.X, 320
 ```
+
+## Download WAF log
+az storage blob download-batch -s insights-logs-applicationgatewayfirewalllog -d . --pattern *.json
