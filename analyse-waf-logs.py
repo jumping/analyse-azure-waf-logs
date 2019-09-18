@@ -59,7 +59,7 @@ def find_log_files(root, regex):
     return res
 
 
-def parse_log_file(results, descriptions, client_ips, path):
+def parse_log_file(results, descriptions, client_ips, path, hostname, uri=None):
     """
     Parse a log file, which is made up of valid JSON blocks.  The file itself is not valid JSON.
     :param results: Dictionary storing the trigger count for each rule triggered.
@@ -73,16 +73,23 @@ def parse_log_file(results, descriptions, client_ips, path):
     for json_block in json_blocks:
 
         json_block_fixed = json_block
-        if not json_block_fixed.endswith('}}'):
-            json_block_fixed = json_block + '}}'
+        #if not json_block_fixed.endswith('}}'):
+        #    json_block_fixed = json_block + '}}'
 
-        if len(json_block_fixed) > 4:
-            try:
-                parsed = json.loads(json_block_fixed)
-                add_rule(results, descriptions, parsed['properties']['ruleId'], parsed['properties']['message'])
-                increment_client_count(client_ips, parsed['properties']['clientIp'])
-            except:
-                print('Error', json_block_fixed)
+        #if len(json_block_fixed) <= 4:
+        #    continue
+        #try:
+        parseds = json.loads(json_block_fixed)
+        for parsed in parseds['records']:
+            if parsed['properties']['hostname'] != hostname:
+                continue  
+            if uri and uri not in parsed['properties']['requestUri']:
+                continue
+            add_rule(results, descriptions, parsed['properties']['ruleId'], parsed['properties']['message'])
+            increment_client_count(client_ips, parsed['properties']['clientIp'])
+        #except Exception as msg:
+        #    print(msg)
+            #print('Error', json_block_fixed)
 
 
 def report_triggered_rules(results, descriptions):
@@ -91,7 +98,7 @@ def report_triggered_rules(results, descriptions):
     :param results: Dictionary storing the trigger count for each rule triggered.
     :param descriptions: Dictionary storing the rule description for each rule triggered.
     """
-    print('rule id, description, count')
+    print('RuleId, Description, Count')
     s = [(k, results[k]) for k in sorted(results, key=results.get, reverse=True)]
     for k, v in s:
         description = descriptions[k]
@@ -112,6 +119,8 @@ def report_client_ips(client_ips):
 # Setup expected arguments
 parser = argparse.ArgumentParser(description='Azure waf log parser')
 parser.add_argument('log_files', help='Path to waf log files')
+parser.add_argument('hostname', help='Check which hostname')
+parser.add_argument('uri', help='Check which keyword in requestUri')
 args = parser.parse_args()
 
 # Data structures
@@ -124,7 +133,9 @@ found_files = find_log_files(args.log_files, r'.*.json')
 
 # Parse and report
 for file in found_files:
-    parse_log_file(_results, _descriptions, _client_ips, file)
+    print(file)
+    print(args.hostname, args.uri)
+    parse_log_file(_results, _descriptions, _client_ips, file, args.hostname, args.uri)
 
 report_triggered_rules(_results, _descriptions)
-report_client_ips(_client_ips)
+#report_client_ips(_client_ips)
